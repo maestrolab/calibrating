@@ -11,6 +11,7 @@ from calibration.temperature.tangent import Tangent
 
 optimizer = 'differential_evolution'
 raw_data = processing_raw("../data/filtered_data_50MPa.txt")
+
 for transformation in ['Austenite', 'Martensite']:
     f = Tangent(transformation, raw_data[transformation])
     f = fitting(f, optimizer)
