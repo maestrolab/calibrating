@@ -11,9 +11,10 @@ import numpy as np
 class Tangent():
     """Class for tangent lines
     - transformation: Austenite or Martensite
-    - raw_data: numpy.array with data for (temperatture, strain, stress)"""
+    - raw_data: numpy.array with data for (temperature, strain, stress)"""
 
-    def __init__(self, transformation, raw_data):
+    def __init__(self,
+     transformation, raw_data):
         if transformation == 'Austenite':
             self.T_1, self.T_4 = raw_data[0, 0], raw_data[-1, 0]
         elif transformation == 'Martensite':
