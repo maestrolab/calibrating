@@ -14,7 +14,7 @@ class Tangent():
     - raw_data: numpy.array with data for (temperature, strain, stress)"""
 
     def __init__(self,
-     transformation, raw_data):
+                 transformation, raw_data):
         if transformation == 'Austenite':
             self.T_1, self.T_4 = raw_data[0, 0], raw_data[-1, 0]
         elif transformation == 'Martensite':
@@ -23,7 +23,8 @@ class Tangent():
         self.transformation = transformation
 
         # Default values for bounds and x0
-        self.bounds = [(30, 120), (10, 60)] + \
+        self.bounds = [(min(self.raw_data[:, 0]), max(self.raw_data[:, 0])),
+                       (min(self.raw_data[:, 0]), max(self.raw_data[:, 0]))] + \
             4*[(min(self.raw_data[:, 1]), max(self.raw_data[:, 1])), ]
         self.x0 = [(x[0]+x[1])/2. for x in self.bounds]
 
