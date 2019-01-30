@@ -24,9 +24,11 @@ def fitting(f, optimizer='differential_evolution'):
 
     f.update(result.x)
     if f.transformation == 'Austenite':
-        print('As=', f.props[1, 0], 'Af=', f.props[-2, 0])
+        f.start, f.finish = f.props[1, 0], f.props[-2, 0]
+        print('As=', f.start, 'Af=', f.finish)
     elif f.transformation == 'Martensite':
-        print('Ms=', f.props[-2, 0], 'Mf=', f.props[1, 0])
+        f.start, f.finish = f.props[-2, 0], f.props[1, 0]
+        print('Ms=', f.start, 'Mf=', f.finish)
     return(f)
 
 

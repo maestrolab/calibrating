@@ -12,6 +12,7 @@ from calibration.temperature.tangent import Tangent
 optimizer = 'differential_evolution'
 driven = 'temperature'
 constant_stress = 200  # MPa
+plotnumber = 1 #enter the number plot you want
 filename = "../data/NiTiHf_UNT/filtered_data_"+str(constant_stress)+"MPa.txt"
 raw_data = processing_raw(filename, driven, constant_stress)
 # raw_data = processing_raw("../data/NiTi_flexinol/filtered_data_50MPa.txt")
@@ -19,7 +20,7 @@ raw_data = processing_raw(filename, driven, constant_stress)
 for transformation in ['Austenite', 'Martensite']:
     f = Tangent(transformation, raw_data[transformation])
     f = fitting(f, optimizer)
-    f.plotting()
+    f.plotting(plotnumber)
 
 plt.grid()
 x, y, z = f.raw_data.T

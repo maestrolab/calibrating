@@ -39,7 +39,7 @@ class Tangent():
 
     def update(self, x):
         """Update properties based on design vector from optimizer
-        - x: [T_1, T_2, strain_1, strain_2, strain_3, strain_4]"""
+        - x: [T_2, T_3, strain_1, strain_2, strain_3, strain_4]"""
         T = [self.T_1, x[0], x[0] + x[1], self.T_4]
         strain = x[2:6]
         self.props = np.vstack([T, strain]).T
@@ -52,13 +52,15 @@ class Tangent():
         root_mean = np.sqrt(np.sum((f-strain)**2)/len(strain))
         return root_mean
 
-    def plotting(self):
+    def plotting(self, label=None, color=['r','b']):
         """Plot raw and tangent lines"""
         T, epsilon, sigma = self.raw_data.T
 
+        n = 200
+        T_tangent = np.linspace(min(T), max(T), n)
         f = []
-        for i in range(len(T)):
-            f.append(self.lines(T[i]))
+        for i in range(n):
+            f.append(self.lines(T_tangent[i]))
 
-        plt.plot(T, f, 'b', label="Tangents")
-        plt.plot(T, epsilon, 'g', label="Experimental data")
+        plt.plot(T_tangent, f, color[0], label="Tangent (" + label + ")")
+        plt.plot(T, epsilon, color[1], label="Experimental data (" + label + ")")
