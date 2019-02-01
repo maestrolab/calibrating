@@ -6,7 +6,6 @@ Created on Jan 21 2019
 from scipy.optimize import differential_evolution, minimize
 from calibration.filehandling import output_reader
 import numpy as np
-import sys
 
 
 def fitting(f, optimizer='differential_evolution'):

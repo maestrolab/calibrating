@@ -10,6 +10,7 @@ from calibration.temperature import processing_raw, fitting
 from calibration.temperature.tangent import Tangent
 from calibration.temperature.combine_plots import combine_plots
 
+
 # Inputs
 optimizer = 'differential_evolution'
 driven = 'temperature'
