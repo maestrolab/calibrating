@@ -3,7 +3,7 @@ import numpy as np
 
 from calibration.temperature import processing_raw, fitting
 from calibration.temperature.tangent import Tangent
-from calibration.temperature.regression_fit import regfit
+from calibration.temperature.graphing.regression_fit import regfit
 
 def plotstresstemp(calibrated, constant_stresses):
 

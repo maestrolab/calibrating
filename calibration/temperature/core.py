@@ -24,12 +24,22 @@ def fitting(f, optimizer='differential_evolution'):
     f.update(result.x)
     if f.transformation == 'Austenite':
         f.start, f.finish = f.props[1, 0], f.props[-2, 0]
-        print('As=', f.start, 'Af=', f.finish)
+        A50 = f.finish + ((f.start-f.finish)/2)
+        print('As=', f.start, 'A50=', A50, 'Af=', f.finish)
     elif f.transformation == 'Martensite':
         f.start, f.finish = f.props[-2, 0], f.props[1, 0]
-        print('Ms=', f.start, 'Mf=', f.finish)
+        M50 = (f.start + ((f.finish-f.start)/2))
+        print('Ms=', f.start, 'M50=', M50, 'Mf=', f.finish)
     return(f)
 
+    # f.update(result.x)
+    # if f.transformation == 'Austenite':
+    #     f.start, f.mid, f.finish = f.props[1, 0], f.props[0,1], f.props[-2, 0]
+    #     print('As=', f.start, 'As50=', f.mid, 'Af=', f.finish)
+    # elif f.transformation == 'Martensite':
+    #     f.start, f.mid, f.finish = f.props[-2, 0], f.props[0,1], f.props[1, 0]
+    #     print('Ms=', f.start, 'Ms50=', f.mid, 'Mf=', f.finish)
+    # return(f)
 
 def processing_raw(filename, driven='temperature', constant_stress=None):
     """Convert .txt file to a numpy array (temperature, strain, sigma) for

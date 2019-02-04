@@ -3,8 +3,8 @@ import numpy as np
 
 from calibration.temperature import processing_raw, fitting
 from calibration.temperature.tangent import Tangent
-from calibration.temperature.plotting import plotstraintemp, plotstresstemp
-from calibration.temperature.regression_fit import regfit
+from calibration.temperature.graphing.plotting import plotstraintemp, plotstresstemp
+from calibration.temperature.graphing.regression_fit import regfit
 
 def combine_plots(driven,constant_stresses,location_of_file, optimizer):
   colors = {'Austenite': ['--r','r'],

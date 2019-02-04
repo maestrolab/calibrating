@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 
 from calibration.temperature import processing_raw, fitting
 from calibration.temperature.tangent import Tangent
-from calibration.temperature.combine_plots import combine_plots
+from calibration.temperature.graphing.combine_plots import combine_plots
 
 
 # Inputs
