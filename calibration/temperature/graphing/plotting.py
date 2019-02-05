@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
-from calibration.temperature import processing_raw, fitting
+from calibration.temperature import plotting, fitting
 from calibration.temperature.tangent import Tangent
 from calibration.temperature.graphing.regression_fit import regfit
 
@@ -29,12 +29,12 @@ def plotstraintemp(driven,constant_stresses,location_of_file, optimizer, colors,
     n = 1
     for constant_stress in constant_stresses:
         filename = str(location_of_file) + str(constant_stress) + "MPa.txt"
-        raw_data = processing_raw(filename, driven, constant_stress)
+        raw_data = plotting(filename, driven, constant_stress)
 
         plt.subplot(2,2,n)
         for transformation in ['Austenite', 'Martensite']:
             f = Tangent(transformation, raw_data[transformation])
-            f = fitting(f, optimizer)
+            f = fitting(raw_data[transformation], f, optimizer)
 
             plt.title('Temperature vs. Strain ' + str(constant_stress), fontdict={'fontsize': 8, 'fontweight': 'medium'})
             f.plotting(str(constant_stress)+' MPa', color=colors[transformation])

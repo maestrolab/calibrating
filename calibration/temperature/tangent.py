@@ -13,19 +13,23 @@ class Tangent():
     - transformation: Austenite or Martensite
     - raw_data: numpy.array with data for (temperature, strain, stress)"""
 
-    def __init__(self,
-                 transformation, raw_data):
+    def __init__(self, transformation, raw_data, standard=False):
         if transformation == 'Austenite':
             self.T_1, self.T_4 = raw_data[0, 0], raw_data[-1, 0]
         elif transformation == 'Martensite':
             self.T_4, self.T_1 = raw_data[0, 0], raw_data[-1, 0]
         self.raw_data = raw_data.copy()
         self.transformation = transformation
+        self.standard = standard
 
         # Default values for bounds and x0
-        self.bounds = [(min(self.raw_data[:, 0]), max(self.raw_data[:, 0])),
-                       (min(self.raw_data[:, 0]), max(self.raw_data[:, 0]))] + \
-            4*[(min(self.raw_data[:, 1]), max(self.raw_data[:, 1])), ]
+        if not standard:
+            n_strains = 4
+        else:
+            n_strains = 3
+
+        self.bounds = 2*[(min(self.raw_data[:, 0]), max(self.raw_data[:, 0]))] + \
+            n_strains*[(min(self.raw_data[:, 1]), max(self.raw_data[:, 1])), ]
         self.x0 = [(x[0]+x[1])/2. for x in self.bounds]
 
     def lines(self, T_i):
@@ -40,8 +44,26 @@ class Tangent():
     def update(self, x):
         """Update properties based on design vector from optimizer
         - x: [T_2, T_3, strain_1, strain_2, strain_3, strain_4]"""
-        T = [self.T_1, x[0], x[0] + x[1], self.T_4]
-        strain = x[2:6]
+        if not self.standard:
+            T = [self.T_1, x[0], x[0] + x[1], self.T_4]
+            strain = x[2:6]
+        else:
+            T = [self.T_1, x[0], x[0] + x[1], self.T_4]
+            T_50 = (T[1] + T[2])/2.
+            strain_50 = np.interp(T_50, self.raw_data[:,0], self.raw_data[:,1])
+            strain_2 = x[3]
+            #a = (strain_2-strain_50)/(T[1] - T_50)
+            #b = strain_50 - a*T_50
+            a = (strain_50-strain_2)/(T_50-T[1])
+            b = strain_50 - a*T_50
+            #strain_3 = a+b*T[2]
+            strain_3 = a*T[2]+b
+            strain = [x[2], strain_2, strain_3, x[-1]]
+            plt.figure()
+            plt.plot(self.raw_data[:,0], self.raw_data[:,1])
+            plt.scatter(T_50, strain_50, color='m')
+            plt.scatter(T, strain)
+            plt.show()
         self.props = np.vstack([T, strain]).T
 
     def error(self, x):

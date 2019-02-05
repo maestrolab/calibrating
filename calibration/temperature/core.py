@@ -6,12 +6,13 @@ Created on Jan 21 2019
 from scipy.optimize import differential_evolution, minimize
 from calibration.filehandling import output_reader
 import numpy as np
-
+import matplotlib.pyplot as plt
 
 def fitting(f, optimizer='differential_evolution'):
     """Optimize properties for class f to represent raw data.
        - f: any class with attributes .error, .x0, and .bound
        - optimizer: BFGS (gradient) or differential_evolution"""
+       #add a flag for true/false standard vs. non standard
 
     print('Fitting ' + f.transformation)
 
@@ -24,12 +25,45 @@ def fitting(f, optimizer='differential_evolution'):
     f.update(result.x)
     if f.transformation == 'Austenite':
         f.start, f.finish = f.props[1, 0], f.props[-2, 0]
-        A50 = f.finish + ((f.start-f.finish)/2)
-        print('As=', f.start, 'A50=', A50, 'Af=', f.finish)
+        # A50 = f.finish + ((f.start-f.finish)/2)
+        #
+        # AstartTempmin = raw_data[:,0][raw_data[:,0] > f.start].min()
+        # AfinishTempmax = raw_data[:,0][raw_data[:,0] < f.finish].max()
+        #
+        # AstartTempminloc = raw_data[:,0].tolist().index(AstartTempmin) #temperature
+        # AfinishTempmaxloc = raw_data[:,0].tolist().index(AfinishTempmax) #temperature
+        #
+        # AstartStrain = raw_data[:,1][AstartTempminloc]
+        # AfinishStrain = raw_data[:,1][AfinishTempmaxloc]
+        #
+        # A50min = raw_data[:,0][raw_data[:,0] > A50].min() #temperature
+        # A50minloc = raw_data[:,0].tolist().index(A50min) #location of Temp and strain
+        # A50minStrain = raw_data[:,1][A50minloc] #strain
+        #
+        # A50max = raw_data[:,0][raw_data[:,0] < A50].max() #temperature
+        # A50maxloc = raw_data[:,0].tolist().index(A50min) #location of Temp and strain
+        # A50maxStrain = raw_data[:,1][A50maxloc] #strain
+        #
+        # x1 = [A50min, A50max] #temperature
+        # y1 = [A50minStrain, A50maxStrain] #strain
+        # xvals = np.linspace(f.start, f.finish) #temperature
+        #
+        # A50_strain = np.interp(A50,raw_data[:,0],raw_data[:,1]) #temp, strain
+        #
+        # #linear interpolate strain
+        print('As=', f.start, 'Af=', f.finish)
     elif f.transformation == 'Martensite':
         f.start, f.finish = f.props[-2, 0], f.props[1, 0]
-        M50 = (f.start + ((f.finish-f.start)/2))
-        print('Ms=', f.start, 'M50=', M50, 'Mf=', f.finish)
+        # M50 = (f.start + ((f.finish-f.start)/2))
+        # M50min = raw_data[:,0][raw_data[:,0] > M50].min()
+        # M50minloc = raw_data[:,0].tolist().index(M50min) #location of Temp and strain
+        # M50minStrain = raw_data[:,1][M50minloc]
+        #
+        # M50max = raw_data[:,0][raw_data[:,0] < M50].max()
+        # M50maxloc = raw_data[:,0].tolist().index(M50max) #location of Temp and strain
+        # M50maxStrain = raw_data[:,1][M50maxloc]
+
+        print('Ms=', f.start,  'Mf=', f.finish)
     return(f)
 
     # f.update(result.x)
