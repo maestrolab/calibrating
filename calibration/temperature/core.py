@@ -36,14 +36,10 @@ class Transformation_Surface():
         T = self.lines(sigma_raw)
         raw = [self.raw_start, self.raw_finish]
         rmse = 0
-        plt.figure()
         for i in range(2):
             T_raw, sigma_raw = raw[i].T
             T_i = T[i].T
-            plt.plot(T_i, sigma_raw, i*'--'+'r')
-            plt.plot(T_raw, sigma_raw, i*'--'+'g')
             rmse += np.sqrt(np.sum((T_i-T_raw)**2)/len(sigma_raw))
-        plt.show()
         return rmse
 
     def update(self, x):
