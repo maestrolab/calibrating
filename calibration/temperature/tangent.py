@@ -13,7 +13,7 @@ class Tangent():
     - transformation: Austenite or Martensite
     - raw_data: numpy.array with data for (temperature, strain, stress)"""
 
-    def __init__(self, transformation, raw_data, standard=False):
+    def __init__(self, transformation, raw_data, stress, standard=True):
         if transformation == 'Austenite':
             self.T_1, self.T_4 = raw_data[0, 0], raw_data[-1, 0]
         elif transformation == 'Martensite':
@@ -21,16 +21,25 @@ class Tangent():
         self.raw_data = raw_data.copy()
         self.transformation = transformation
         self.standard = standard
-
+        self.stress = stress
         # Default values for bounds and x0
         if not standard:
             n_strains = 4
         else:
             n_strains = 3
 
-        self.bounds = 2*[(min(self.raw_data[:, 0]), max(self.raw_data[:, 0]))] + \
+        self.bounds = [(min(self.raw_data[:, 0]), max(self.raw_data[:, 0])),
+                       (0, (max(self.raw_data[:, 0])-min(self.raw_data[:, 0]))/2.)] + \
             n_strains*[(min(self.raw_data[:, 1]), max(self.raw_data[:, 1])), ]
         self.x0 = [(x[0]+x[1])/2. for x in self.bounds]
+
+    def _standard_50(self, T):
+        # Calculating intermediate points
+        T_50 = (T[1] + T[2])/2.
+        # Sorting data for interpolation
+        sorted_data = self.raw_data[self.raw_data[:, 0].argsort()]
+        strain_50 = np.interp(T_50, sorted_data[:, 0], sorted_data[:, 1])
+        return T_50, strain_50
 
     def lines(self, T_i):
         """Calculates tangent line function for a value T_i
@@ -49,22 +58,19 @@ class Tangent():
             strain = x[2:6]
         else:
             T = [self.T_1, x[0], x[0] + x[1], self.T_4]
-            T_50 = (T[1] + T[2])/2.
-            strain_50 = np.interp(T_50, self.raw_data[:,0], self.raw_data[:,1])
+            T_50, strain_50 = self._standard_50(T)
+            # Calculating strain transformation for T_3
             strain_2 = x[3]
-            #a = (strain_2-strain_50)/(T[1] - T_50)
-            #b = strain_50 - a*T_50
             a = (strain_50-strain_2)/(T_50-T[1])
             b = strain_50 - a*T_50
-            #strain_3 = a+b*T[2]
             strain_3 = a*T[2]+b
             strain = [x[2], strain_2, strain_3, x[-1]]
-            plt.figure()
-            plt.plot(self.raw_data[:,0], self.raw_data[:,1])
-            plt.scatter(T_50, strain_50, color='m')
-            plt.scatter(T, strain)
-            plt.show()
+
         self.props = np.vstack([T, strain]).T
+        if self.transformation == 'Austenite':
+            self.start, self.finish = self.props[1, 0], self.props[-2, 0]
+        elif self.transformation == 'Martensite':
+            self.start, self.finish = self.props[-2, 0], self.props[1, 0]
 
     def error(self, x):
         """Calculate root mean squared"""
@@ -74,7 +80,7 @@ class Tangent():
         root_mean = np.sqrt(np.sum((f-strain)**2)/len(strain))
         return root_mean
 
-    def plotting(self, label=None, color=['r','b']):
+    def plotting(self, label=None, color=['r', 'b']):
         """Plot raw and tangent lines"""
         T, epsilon, sigma = self.raw_data.T
 
@@ -84,5 +90,9 @@ class Tangent():
         for i in range(n):
             f.append(self.lines(T_tangent[i]))
 
-        plt.plot(T_tangent, f, color[0], label="Tangent (" + label + ")")
-        plt.plot(T, epsilon, color[1], label="Experimental data (" + label + ")")
+        if label is None:
+            stress = ''
+        else:
+            stress = " (" + label + ")"
+        plt.plot(T_tangent, f, color[0], label="Tangent" + stress)
+        plt.plot(T, epsilon, color[1], label="Experimental data" + stress)

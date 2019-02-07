@@ -8,11 +8,88 @@ from calibration.filehandling import output_reader
 import numpy as np
 import matplotlib.pyplot as plt
 
-def fitting(f, optimizer='differential_evolution'):
+
+class Transformation_Surface():
+    """Class for tangent lines
+    - transformation: Austenite or Martensite
+    - raw_data: numpy.array with data for (temperature, strain, stress)"""
+
+    def __init__(self, transformation, f_list):
+        self.raw_start = []
+        self.raw_finish = []
+        self.stress = []
+        for f in f_list:
+            self.raw_start.append(f.start)
+            self.raw_finish.append(f.finish)
+            self.stress.append(f.stress)
+        self.raw_start = np.vstack([self.raw_start, self.stress]).T
+        self.raw_finish = np.vstack([self.raw_finish, self.stress]).T
+
+        self.transformation = transformation
+        self.bounds = np.array([(0., 200.), (0., 150.), (0.1, 30.)])
+        self.x0 = [(x[0]+x[1])/2. for x in self.bounds]
+
+    def error(self, x):
+        self.update(x)
+
+        T_raw, sigma_raw = self.raw_start.T
+        T = self.lines(sigma_raw)
+        raw = [self.raw_start, self.raw_finish]
+        rmse = 0
+        plt.figure()
+        for i in range(2):
+            T_raw, sigma_raw = raw[i].T
+            T_i = T[i].T
+            plt.plot(T_i, sigma_raw, i*'--'+'r')
+            plt.plot(T_raw, sigma_raw, i*'--'+'g')
+            rmse += np.sqrt(np.sum((T_i-T_raw)**2)/len(sigma_raw))
+        plt.show()
+        return rmse
+
+    def update(self, x):
+        if self.transformation == 'Austenite':
+            self.start = x[0]
+            self.finish = x[0] + x[1]
+            self.slope = x[2]
+        else:
+            self.start = x[0] + x[1]
+            self.finish = x[0]
+            self.slope = x[2]
+
+    def lines(self, sigma):
+        T_s = sigma/self.slope + self.start
+        T_f = sigma/self.slope + self.finish
+        return T_s, T_f
+
+    def plotting(self, surfaces=True):
+        if self.transformation == 'Austenite':
+            color = 'r'
+        else:
+            color = 'b'
+
+        T, sigma = self.raw_start.T
+        plt.scatter(T, sigma, c=color, marker='o',
+                    label=self.transformation + " Start")
+        T, sigma = self.raw_finish.T
+        plt.scatter(T, sigma, c=color, marker='s',
+                    label=self.transformation + " Finish")
+
+        if surfaces:
+            sigma = np.array([0]+list(sigma))
+            T_s, T_f = self.lines(sigma)
+            plt.plot(T_s, sigma, color,
+                     label=self.transformation + " Start")
+            plt.plot(T_f, sigma, color,
+                     label=self.transformation + " Finish")
+        plt.legend(loc="lower left", prop={'size': 8})
+        plt.xlabel("Temperature (C)")
+        plt.ylabel("Stress (N/m^2)")
+
+
+def fitting_temperatures(f, optimizer='differential_evolution'):
     """Optimize properties for class f to represent raw data.
        - f: any class with attributes .error, .x0, and .bound
        - optimizer: BFGS (gradient) or differential_evolution"""
-       #add a flag for true/false standard vs. non standard
 
     print('Fitting ' + f.transformation)
 
@@ -24,56 +101,32 @@ def fitting(f, optimizer='differential_evolution'):
 
     f.update(result.x)
     if f.transformation == 'Austenite':
-        f.start, f.finish = f.props[1, 0], f.props[-2, 0]
-        # A50 = f.finish + ((f.start-f.finish)/2)
-        #
-        # AstartTempmin = raw_data[:,0][raw_data[:,0] > f.start].min()
-        # AfinishTempmax = raw_data[:,0][raw_data[:,0] < f.finish].max()
-        #
-        # AstartTempminloc = raw_data[:,0].tolist().index(AstartTempmin) #temperature
-        # AfinishTempmaxloc = raw_data[:,0].tolist().index(AfinishTempmax) #temperature
-        #
-        # AstartStrain = raw_data[:,1][AstartTempminloc]
-        # AfinishStrain = raw_data[:,1][AfinishTempmaxloc]
-        #
-        # A50min = raw_data[:,0][raw_data[:,0] > A50].min() #temperature
-        # A50minloc = raw_data[:,0].tolist().index(A50min) #location of Temp and strain
-        # A50minStrain = raw_data[:,1][A50minloc] #strain
-        #
-        # A50max = raw_data[:,0][raw_data[:,0] < A50].max() #temperature
-        # A50maxloc = raw_data[:,0].tolist().index(A50min) #location of Temp and strain
-        # A50maxStrain = raw_data[:,1][A50maxloc] #strain
-        #
-        # x1 = [A50min, A50max] #temperature
-        # y1 = [A50minStrain, A50maxStrain] #strain
-        # xvals = np.linspace(f.start, f.finish) #temperature
-        #
-        # A50_strain = np.interp(A50,raw_data[:,0],raw_data[:,1]) #temp, strain
-        #
-        # #linear interpolate strain
         print('As=', f.start, 'Af=', f.finish)
     elif f.transformation == 'Martensite':
-        f.start, f.finish = f.props[-2, 0], f.props[1, 0]
-        # M50 = (f.start + ((f.finish-f.start)/2))
-        # M50min = raw_data[:,0][raw_data[:,0] > M50].min()
-        # M50minloc = raw_data[:,0].tolist().index(M50min) #location of Temp and strain
-        # M50minStrain = raw_data[:,1][M50minloc]
-        #
-        # M50max = raw_data[:,0][raw_data[:,0] < M50].max()
-        # M50maxloc = raw_data[:,0].tolist().index(M50max) #location of Temp and strain
-        # M50maxStrain = raw_data[:,1][M50maxloc]
-
-        print('Ms=', f.start,  'Mf=', f.finish)
+        print('Ms=', f.start, 'Mf=', f.finish)
     return(f)
 
-    # f.update(result.x)
-    # if f.transformation == 'Austenite':
-    #     f.start, f.mid, f.finish = f.props[1, 0], f.props[0,1], f.props[-2, 0]
-    #     print('As=', f.start, 'As50=', f.mid, 'Af=', f.finish)
-    # elif f.transformation == 'Martensite':
-    #     f.start, f.mid, f.finish = f.props[-2, 0], f.props[0,1], f.props[1, 0]
-    #     print('Ms=', f.start, 'Ms50=', f.mid, 'Mf=', f.finish)
-    # return(f)
+
+def fitting_transformation(f, optimizer='differential_evolution'):
+    """Optimize properties for class f to represent raw data.
+       - f: any class with attributes .error, .x0, and .bound
+       - optimizer: BFGS (gradient) or differential_evolution"""
+
+    print('Fitting ' + f.transformation)
+
+    if optimizer == 'BFGS':
+        result = minimize(f.error, f.x0, method='BFGS')
+    elif optimizer == 'differential_evolution':
+        result = differential_evolution(f.error, f.bounds, popsize=100,
+                                        maxiter=100)
+
+    f.update(result.x)
+    if f.transformation == 'Austenite':
+        print('As=', f.start, 'Af=', f.finish, 'C=', f.slope)
+    elif f.transformation == 'Martensite':
+        print('Ms=', f.start, 'Mf=', f.finish, 'C=', f.slope)
+    return(f)
+
 
 def processing_raw(filename, driven='temperature', constant_stress=None):
     """Convert .txt file to a numpy array (temperature, strain, sigma) for

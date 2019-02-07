@@ -6,26 +6,23 @@ Created on Jan 21 2019
 
 import matplotlib.pyplot as plt
 
-from calibration.temperature import processing_raw, fitting
+from calibration.temperature import processing_raw, fitting_temperatures
 from calibration.temperature.tangent import Tangent
 
 optimizer = 'differential_evolution'
 driven = 'temperature'
 constant_stress = 200  # MPa
-plotnumber = 1 #enter the number plot you want
+plotnumber = 1  # enter the number plot you want
 standard = True
 filename = "../data/NiTiHf_UNT/filtered_data_"+str(constant_stress)+"MPa.txt"
 raw_data = processing_raw(filename, driven, constant_stress)
 # raw_data = processing_raw("../data/NiTi_flexinol/filtered_data_50MPa.txt")
 
+colors = {'Austenite': ['--r', 'r'], 'Martensite': ['--b', 'b']}
 for transformation in ['Austenite', 'Martensite']:
-    f = Tangent(transformation, raw_data[transformation], standard=False)
-    f = fitting(f, optimizer)
-    T, strain = f.props.T
-    f.x0 = [T[1], T[2], strain[0], strain[1], strain[3]]
-    f.standard = True
-    f =  fitting(f, optimizer)
-    f.plotting(transformation)
+    f = Tangent(transformation, raw_data[transformation], standard)
+    f = fitting_temperatures(f, optimizer)
+    f.plotting(transformation, colors[transformation])
 
 plt.grid()
 x, y, z = f.raw_data.T
