@@ -41,6 +41,16 @@ class Tangent():
         strain_50 = np.interp(T_50, sorted_data[:, 0], sorted_data[:, 1])
         return T_50, strain_50
 
+    def _strain_3(self, T_2, T_3, strain_2):
+        """input: [T_2,T_3, strain_2]"""
+        T = [self.T_1, T_2, T_3, self.T_4]
+        T_50, strain_50 = self._standard_50(T)
+        # Calculating strain transformation for T_3
+        a = (strain_50-strain_2)/(T_50-T[1])
+        b = strain_50 - a*T_50
+        strain_3 = a*T[2]+b
+        return(strain_3)
+
     def lines(self, T_i):
         """Calculates tangent line function for a value T_i
         - T_i: float to calculate estimate value of strain"""
@@ -58,12 +68,8 @@ class Tangent():
             strain = x[2:6]
         else:
             T = [self.T_1, x[0], x[0] + x[1], self.T_4]
-            T_50, strain_50 = self._standard_50(T)
-            # Calculating strain transformation for T_3
-            strain_2 = x[3]
-            a = (strain_50-strain_2)/(T_50-T[1])
-            b = strain_50 - a*T_50
-            strain_3 = a*T[2]+b
+            strain_2 = x[2]
+            strain_3 = self._strain_3(T[1], T[2], strain_2)
             strain = [x[2], strain_2, strain_3, x[-1]]
 
         self.props = np.vstack([T, strain]).T
@@ -94,5 +100,6 @@ class Tangent():
             stress = ''
         else:
             stress = " (" + label + ")"
-        plt.plot(T_tangent, f, color[0], label="Tangent" + stress)
+
+        plt.plot(T_tangent, f, color[0], label="Tangent" + stress) #temperature,strain
         plt.plot(T, epsilon, color[1], label="Experimental data" + stress)

@@ -6,8 +6,9 @@ Created on Jan 21 2019
 
 import matplotlib.pyplot as plt
 
-from calibration.temperature import processing_raw, fitting_temperatures
+from calibration.temperature import processing_raw, fitting_temperatures, fitting_transformations
 from calibration.temperature.tangent import Tangent
+from calibration.temperature.plotting import plot_tangents
 
 optimizer = 'differential_evolution'
 driven = 'temperature'
@@ -19,14 +20,21 @@ raw_data = processing_raw(filename, driven, constant_stress)
 # raw_data = processing_raw("../data/NiTi_flexinol/filtered_data_50MPa.txt")
 
 colors = {'Austenite': ['--r', 'r'], 'Martensite': ['--b', 'b']}
+surfaces = {}
 for transformation in ['Austenite', 'Martensite']:
-    f = Tangent(transformation, raw_data[transformation], standard)
-    f = fitting_temperatures(f, optimizer)
-    f.plotting(transformation, colors[transformation])
+    surfaces[transformation] = Tangent(transformation,
+                                       raw_data[transformation], standard)
+
+a,m = fitting_transformations(surfaces['Austenite'],
+                            surfaces['Martensite'], optimizer)
 
 plt.grid()
-x, y, z = f.raw_data.T
+# x, y, z = f.raw_data.T
+
+plot_tangents(a, constant_stress)
+plot_tangents(m, constant_stress)
 plt.legend(loc="lower left")
 plt.xlabel("Temperature (C)")
 plt.ylabel("Strain (m/m)")
+
 plt.show()

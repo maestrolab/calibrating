@@ -81,7 +81,6 @@ class Transformation_Surface():
         plt.xlabel("Temperature (C)")
         plt.ylabel("Stress (N/m^2)")
 
-
 def fitting_temperatures(f, optimizer='differential_evolution'):
     """Optimize properties for class f to represent raw data.
        - f: any class with attributes .error, .x0, and .bound
@@ -122,6 +121,74 @@ def fitting_transformation(f, optimizer='differential_evolution'):
     elif f.transformation == 'Martensite':
         print('Ms=', f.start, 'Mf=', f.finish, 'C=', f.slope)
     return(f)
+
+def fitting_transformations(a, m, optimizer='differential_evolution'):
+    """Optimize properties for class f to represent raw data.
+       - f: any class with attributes .error, .x0, and .bound
+       - optimizer: BFGS (gradient) or differential_evolution"""
+
+    def error(x):
+        """
+        Originally (16 DOF):
+        x = [Ta_2, Ta_3, Ea_1, Ea_2, Ea_3, Ea_4,
+             Tm_2, Tm_3, Em_1, Em_2, Em_3, Em_4]
+        Now:
+        x = [Ta_2, Ta_3, Ea_1, Ea_2, Ea_4, Em_2]"""
+        x_a, x_m = update(x, output=True)
+
+        return(a.error(x_a) + m.error(x_m))
+
+    def update(x, output=False):
+        """
+        Originally (16 DOF):
+        x = [Ta_2, Ta_3, Ea_1, Ea_2, Ea_3, Ea_4,
+             Tm_2, Tm_3, Em_1, Em_2, Em_3, Em_4]
+        Now:
+        x = [Ta_2, Ta_3, Ea_1, Ea_2, Ea_4, Em_2]"""
+        x_a = x[:-1]
+
+        Ta_2, Ta_3, Ea_1, Ea_2, Ea_4, Em_2 = x
+
+        Tm_1 = m.T_1
+        Tm_4 = m.T_4
+        Em_1 = Ea_1
+        Em_4 = Ea_4
+        Ea_3 = a._strain_3(Ta_2, Ta_3, Ea_2)
+        Tm_2 = Tm_1 + ((Ta_2-Tm_1)*(Em_2-Em_1))/(Ea_2-Ea_1)
+        residual = 9999999
+        tol = 1e-3
+        max_iterations = 20
+        iterations = 0
+        # Initial guess
+        Tm_3 = (Tm_2 + m.T_4)/2.
+
+        while residual > tol and iterations < max_iterations:
+            previous = Tm_3
+            Em_3 = m._strain_3(Tm_2, Tm_3, Em_2)
+            Tm_3 = Tm_4 - ((Tm_4-Ta_3)*(Em_4-Em_3))/(Ea_4-Ea_3)
+            residual = abs(Tm_3 - previous)
+            iterations += 1
+            # print(iterations)
+        # print(iterations, Em_3, Tm_3)
+        x_m = [Tm_2, Tm_3, Em_1, Em_2, Em_4]
+        a.update(x_a)
+        m.update(x_m)
+        if output:
+            return x_a, x_m
+
+    bounds = a.bounds + m.bounds[-1:]
+    x0 = a.x0 + m.x0[-1:] #we want this to be 6
+
+    if optimizer == 'BFGS':
+        result = minimize(error, x0, method='BFGS')
+    elif optimizer == 'differential_evolution':
+        result = differential_evolution(error, bounds, popsize=100,
+                                        maxiter=100)
+
+    update(result.x, output=True)
+    print('As=', a.start, 'Af=', a.finish)
+    print('Ms=', m.start, 'Mf=', m.finish)
+    return(a, m)
 
 
 def processing_raw(filename, driven='temperature', constant_stress=None):

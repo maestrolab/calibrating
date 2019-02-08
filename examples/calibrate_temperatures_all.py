@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pickle
 
-from calibration.temperature import processing_raw, fitting_temperatures, Transformation_Surface, fitting_transformation
+from calibration.temperature import processing_raw, fitting_temperatures, Transformation_Surface, fitting_transformation, fitting_transformations
 from calibration.temperature.plotting import plot_tangents
 from calibration.temperature.tangent import Tangent
 
@@ -25,12 +25,15 @@ calibrated_tangents = {'Austenite': [], 'Martensite': []}
 for constant_stress in constant_stresses:
     filename = location_of_file + str(constant_stress) + "MPa.txt"
     raw_data = processing_raw(filename, driven, constant_stress)
-
+    surfaces = {'Austenite': [], 'Martensite': []}
     for transformation in ['Austenite', 'Martensite']:
-        f = Tangent(transformation, raw_data[transformation], constant_stress,
-                    standard)
-        f = fitting_temperatures(f, optimizer)
-        calibrated_tangents[transformation].append(f)
+        surfaces[transformation] = Tangent(transformation,
+                                           raw_data[transformation], standard)
+
+    a,m = fitting_transformations(surfaces['Austenite'],
+                                surfaces['Martensite'], optimizer)
+    calibrated_tangents['Austenite'].append(a)
+    calibrated_tangents['Martensite'].append(m)
 
 plot_tangents(calibrated_tangents, constant_stresses)
 
@@ -43,4 +46,5 @@ for trans in ['Austenite', 'Martensite']:
     f = Transformation_Surface(trans, calibrated_tangents[trans])
     f = fitting_transformation(f, optimizer)
     f.plotting()
+
 plt.show()
