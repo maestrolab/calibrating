@@ -30,8 +30,8 @@ for constant_stress in constant_stresses:
         surfaces[transformation] = Tangent(transformation,
                                            raw_data[transformation], standard)
 
-    a,m = fitting_transformations(surfaces['Austenite'],
-                                surfaces['Martensite'], optimizer)
+    a, m = fitting_transformations(surfaces['Austenite'],
+                                   surfaces['Martensite'], optimizer)
     calibrated_tangents['Austenite'].append(a)
     calibrated_tangents['Martensite'].append(m)
 

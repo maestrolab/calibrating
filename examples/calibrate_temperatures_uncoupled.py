@@ -10,10 +10,9 @@ from calibration.temperature import processing_raw, fitting_temperatures, fittin
 from calibration.temperature.tangent import Tangent
 from calibration.temperature.plotting import plot_tangents
 
-optimizer = 'BFGS'
+optimizer = 'differential_evolution'
 driven = 'temperature'
 constant_stress = 200  # MPa
-plotnumber = 1  # enter the number plot you want
 standard = True
 filename = "../data/NiTiHf_UNT/filtered_data_"+str(constant_stress)+"MPa.txt"
 raw_data = processing_raw(filename, driven, constant_stress)
@@ -24,11 +23,14 @@ surfaces = {}
 for transformation in ['Austenite', 'Martensite']:
     surfaces[transformation] = Tangent(transformation,
                                        raw_data[transformation], standard)
-
-a, m = fitting_transformations(surfaces['Austenite'],
-                               surfaces['Martensite'], optimizer)
+    surfaces[transformation] = fitting_temperatures(surfaces[transformation],
+                                                    optimizer)
+    surfaces[transformation].plotting(transformation, colors[transformation])
+# a, m = fitting_transformations(surfaces['Austenite'],
+#                                surfaces['Martensite'], optimizer)
 
 plt.grid()
+plt.show()
 # x, y, z = f.raw_data.T
 
-plot_tangents({'Austenite': a, 'Martensite': m}, constant_stress)
+# plot_tangents({'Austenite': a, 'Martensite': m}, constant_stress)

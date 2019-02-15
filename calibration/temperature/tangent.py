@@ -13,15 +13,19 @@ class Tangent():
     - transformation: Austenite or Martensite
     - raw_data: numpy.array with data for (temperature, strain, stress)"""
 
-    def __init__(self, transformation, raw_data, stress, standard=True):
+    def __init__(self, transformation, raw_data, stress, standard=True,
+                 delta_strain=False):
         if transformation == 'Austenite':
             self.T_1, self.T_4 = raw_data[0, 0], raw_data[-1, 0]
         elif transformation == 'Martensite':
             self.T_4, self.T_1 = raw_data[0, 0], raw_data[-1, 0]
+        if delta_strain:
+            self.E_1, self.E_4 = max(raw_data[:, 1]), min(raw_data[:, 1])
         self.raw_data = raw_data.copy()
         self.transformation = transformation
         self.standard = standard
         self.stress = stress
+        self.delta_strain = delta_strain
         # Default values for bounds and x0
         if not standard:
             n_strains = 4
@@ -65,12 +69,21 @@ class Tangent():
         - x: [T_2, T_3, strain_1, strain_2, strain_3, strain_4]"""
         if not self.standard:
             T = [self.T_1, x[0], x[0] + x[1], self.T_4]
-            strain = x[2:6]
+            if self.delta_strain:
+                strain = [self.E_1, x[2], x[3], self.E_4]
+            else:
+                strain = x[2:6]
         else:
             T = [self.T_1, x[0], x[0] + x[1], self.T_4]
-            strain_2 = x[2]
-            strain_3 = self._strain_3(T[1], T[2], strain_2)
-            strain = [x[2], strain_2, strain_3, x[-1]]
+            if self.delta_strain:
+                strain_1 = self.E_1
+                strain_4 = self.E_4
+            else:
+                strain_1 = x[2]
+                strain_2 = x[3]
+                strain_3 = self._strain_3(T[1], T[2], strain_2)
+                strain_4 = x[-1]
+            strain = [strain_1, strain_2, strain_3, strain_4]
 
         self.props = np.vstack([T, strain]).T
         if self.transformation == 'Austenite':
@@ -101,5 +114,5 @@ class Tangent():
         else:
             stress = " (" + label + ")"
 
-        plt.plot(T_tangent, f, color[0], label="Tangent" + stress) #temperature,strain
+        plt.plot(T_tangent, f, color[0], label="Tangent" + stress)  # temperature,strain
         plt.plot(T, epsilon, color[1], label="Experimental data" + stress)

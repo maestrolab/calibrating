@@ -3,7 +3,7 @@ Created on Jan 21 2019
 @author: Pedro Leal
 """
 
-from scipy.optimize import differential_evolution, minimize
+from scipy.optimize import differential_evolution, minimize, bisect
 from calibration.filehandling import output_reader
 import numpy as np
 import matplotlib.pyplot as plt
@@ -81,6 +81,7 @@ class Transformation_Surface():
         plt.xlabel("Temperature (C)")
         plt.ylabel("Stress (N/m^2)")
 
+
 def fitting_temperatures(f, optimizer='differential_evolution'):
     """Optimize properties for class f to represent raw data.
        - f: any class with attributes .error, .x0, and .bound
@@ -122,6 +123,7 @@ def fitting_transformation(f, optimizer='differential_evolution'):
         print('Ms=', f.start, 'Mf=', f.finish, 'C=', f.slope)
     return(f)
 
+
 def fitting_transformations(a, m, optimizer='differential_evolution'):
     """Optimize properties for class f to represent raw data.
        - f: any class with attributes .error, .x0, and .bound
@@ -147,42 +149,60 @@ def fitting_transformations(a, m, optimizer='differential_evolution'):
         x = [Ta_2, Ta_3, Ea_1, Ea_2, Ea_4, Em_2]"""
         x_a = x[:-1]
 
-        Ta_2, Ta_3, Ea_1, Ea_2, Ea_4, Em_2 = x
+        Ta_2, Ta_3_delta, Ea_1, Ea_2, Ea_4, Em_2 = x
 
+        Ta_3 = Ta_2 + Ta_3_delta
         Tm_1 = m.T_1
         Tm_4 = m.T_4
+
         Em_1 = Ea_1
         Em_4 = Ea_4
         Ea_3 = a._strain_3(Ta_2, Ta_3, Ea_2)
         Tm_2 = Tm_1 + ((Ta_2-Tm_1)*(Em_2-Em_1))/(Ea_2-Ea_1)
-        residual = 9999999
-        tol = 1e-3
-        max_iterations = 20
-        iterations = 0
-        # Initial guess
-        Tm_3 = (Tm_2 + m.T_4)/2.
 
-        while residual > tol and iterations < max_iterations:
-            previous = Tm_3
-            Em_3 = m._strain_3(Tm_2, Tm_3, Em_2)
-            Tm_3 = Tm_4 - ((Tm_4-Ta_3)*(Em_4-Em_3))/(Ea_4-Ea_3)
-            residual = abs(Tm_3 - previous)
-            iterations += 1
-            # print(iterations)
-        # print(iterations, Em_3, Tm_3)
-        x_m = [Tm_2, Tm_3, Em_1, Em_2, Em_4]
+        def aa(Tm_3):
+            return m._strain_3(Tm_2, Tm_3, Em_2)
+
+        def bb(Tm_3):
+            return Em_4 - ((Tm_4-Tm_3)*(Ea_4-Ea_3))/(Tm_4-Ta_3)
+
+        def cc(Tm_3):
+            return aa(Tm_3)-bb(Tm_3)
+
+        # plt.figure()
+        # T = np.linspace(0, 300, 200)
+        # plt.plot(T, cc(T))
+        # plt.show()
+        res = minimize(cc, Ta_3)
+        Tm_3 = res.x
+
+        x_m = [Tm_2, Tm_3-Tm_2, Em_1, Em_2, Em_4]
         a.update(x_a)
         m.update(x_m)
+        # plt.figure()
+        # plt.plot([a.T_1, Ta_2, Ta_3, a.T_4], [Ea_1, Ea_2, Ea_3, Ea_4], 'r')
+        # x, y, z = a.raw_data.T
+        # plt.plot(x, y, '--r')
+        # plt.scatter([a.T_1, Ta_2, Ta_3, a.T_4], [Ea_1, Ea_2, Ea_3, Ea_4], c='r')
+        # plt.plot([m.T_1, Tm_2, Tm_3, m.T_4], [Em_1, Em_2, Em_3, Em_4], 'b')
+        # x, y, z = m.raw_data.T
+        # plt.plot(x, y, '--b')
+        # plt.scatter([m.T_1, Tm_2, Tm_3, m.T_4], [Em_1, Em_2, Em_3, Em_4], c='b')
+        # plt.show()
         if output:
             return x_a, x_m
 
     bounds = a.bounds + m.bounds[-1:]
-    x0 = a.x0 + m.x0[-1:] #we want this to be 6
+    x0 = a.x0 + m.x0[-1:]  # we want this to be 6
+    print('bounds', bounds)
+    print('x0', x0)
+    # [Ta_2, Ta_3, Ea_1, Ea_2, Ea_4, Em_2]
+    error([150, 50, 4.2, 4.1, 0, 4.15])
 
     if optimizer == 'BFGS':
         result = minimize(error, x0, method='BFGS')
     elif optimizer == 'differential_evolution':
-        result = differential_evolution(error, bounds, popsize=100,
+        result = differential_evolution(error, bounds, popsize=15,
                                         maxiter=100)
 
     update(result.x, output=True)
