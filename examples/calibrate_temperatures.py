@@ -12,10 +12,16 @@ from calibration.temperature.plotting import plot_tangents
 
 optimizer = 'BFGS'
 driven = 'temperature'
+
 constant_stress = 200  # MPa
+# constant_stress = 600
+
 plotnumber = 1  # enter the number plot you want
 standard = True
+
 filename = "../data/NiTiHf_UNT/filtered_data_"+str(constant_stress)+"MPa.txt"
+# filename = "../data/NiTiHf_Isobaric/filtered_data_"+str(constant_stress)+"MPa.txt"
+
 raw_data = processing_raw(filename, driven, constant_stress)
 # raw_data = processing_raw("../data/NiTi_flexinol/filtered_data_50MPa.txt")
 

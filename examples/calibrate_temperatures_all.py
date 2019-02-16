@@ -16,9 +16,11 @@ from calibration.temperature.tangent import Tangent
 # Inputs
 optimizer = 'differential_evolution'
 driven = 'temperature'
-constant_stresses = [100, 200, 300]
+# constant_stresses = [100, 200, 300]
+constant_stresses = [50, 100, 200, 300, 400, 500, 600]
 standard = False
-location_of_file = "../data/NiTiHf_UNT/filtered_data_"
+# location_of_file = "../data/NiTiHf_UNT/filtered_data_"
+location_of_file = "../data/NiTiHf_Isobaric/filtered_data_"
 
 # Calibrating tangents
 calibrated_tangents = {'Austenite': [], 'Martensite': []}
