@@ -5,9 +5,10 @@ import numpy as np
 def plot_tangents(calibrated_tangents, constant_stresses):
     try:
         for i in range(len(constant_stresses)):
-            plt.subplot(2, 2, i+1)
+            print(len(constant_stresses) // 2)
+            plt.subplot(2, len(constant_stresses) // 2 + len(constant_stresses) % 2, i+1)
             plt.title(str(constant_stresses[i]) + ' MPa',
-                      fontdict={'fontsize': 8, 'fontweight': 'medium'})
+                      fontdict={'fontsize': 12, 'fontweight': 'medium'})
             for transformation in ['Austenite', 'Martensite']:
                 calibrated_tangents[transformation][i].plotting()
             plt.legend(loc="lower left", prop={'size': 8})

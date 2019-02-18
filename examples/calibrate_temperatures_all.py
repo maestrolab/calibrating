@@ -13,10 +13,10 @@ from calibration.temperature.plotting import plot_tangents
 from calibration.temperature.tangent import Tangent
 
 
-# Inputs
+# # Inputs
 optimizer = 'differential_evolution'
 driven = 'temperature'
-# constant_stresses = [100, 200, 300]
+# # constant_stresses = [100, 200, 300]
 constant_stresses = [50, 100, 200, 300, 400, 500, 600]
 standard = True
 hot_to_cold = True
@@ -36,20 +36,23 @@ for constant_stress in constant_stresses:
     surfaces = {'Austenite': [], 'Martensite': []}
     for transformation in ['Austenite', 'Martensite']:
         surfaces[transformation] = Tangent(transformation,
-                                           raw_data[transformation], standard)
+                                           raw_data[transformation],
+                                           constant_stress,
+                                           standard)
         surfaces[transformation] = fitting_temperatures(surfaces[transformation],
                                                         optimizer)
-        surfaces[transformation].plotting(transformation,
-                                          colors[transformation])
+        # surfaces[transformation].plotting(transformation,
+        #                                   colors[transformation])
         calibrated_tangents[transformation].append(surfaces[transformation])
     plt.show()
 # plt.grid()
 # plt.show()
 
+pickle.dump(calibrated_tangents,
+            open('../data/NiTiHf_Karaman/temperatures.p', 'wb'))
+# calibrated_tangents = pickle.load(open('../data/NiTiHf_Karaman/temperatures.p', 'rb'))
 plot_tangents(calibrated_tangents, constant_stresses)
 
-# pickle.dump(calibrated_tangents,
-#             open('../data/NiTiHf_UNT/temperatures.p', 'wb'))
 
 # Calibrating surfaces
 calibrated_surfaces = {}
