@@ -17,30 +17,39 @@ from calibration.temperature.tangent import Tangent
 optimizer = 'differential_evolution'
 driven = 'temperature'
 # constant_stresses = [100, 200, 300]
-# constant_stresses = [50, 100, 200, 300, 400, 500, 600]
-standard = False
+constant_stresses = [50, 100, 200, 300, 400, 500, 600]
+standard = True
+hot_to_cold = True
+filter_rate = 40
 # location_of_file = "../data/NiTiHf_UNT/filtered_data_"
-# location_of_file = "../data/NiTiHf_Isobaric/filtered_data_"
+location_of_file = "../data/NiTiHf_Karaman/filtered_data_"
+
+colors = {'Austenite': ['--r', 'r'], 'Martensite': ['--b', 'b']}
+
 
 # Calibrating tangents
 calibrated_tangents = {'Austenite': [], 'Martensite': []}
 for constant_stress in constant_stresses:
     filename = location_of_file + str(constant_stress) + "MPa.txt"
-    raw_data = processing_raw(filename, driven, constant_stress)
+    raw_data = processing_raw(filename, driven, constant_stress, filter_rate,
+                              hot_to_cold)
     surfaces = {'Austenite': [], 'Martensite': []}
     for transformation in ['Austenite', 'Martensite']:
         surfaces[transformation] = Tangent(transformation,
                                            raw_data[transformation], standard)
-
-    a, m = fitting_transformations(surfaces['Austenite'],
-                                   surfaces['Martensite'], optimizer)
-    calibrated_tangents['Austenite'].append(a)
-    calibrated_tangents['Martensite'].append(m)
+        surfaces[transformation] = fitting_temperatures(surfaces[transformation],
+                                                        optimizer)
+        surfaces[transformation].plotting(transformation,
+                                          colors[transformation])
+        calibrated_tangents[transformation].append(surfaces[transformation])
+    plt.show()
+# plt.grid()
+# plt.show()
 
 plot_tangents(calibrated_tangents, constant_stresses)
 
-pickle.dump(calibrated_tangents,
-            open('../data/NiTiHf_UNT/temperatures.p', 'wb'))
+# pickle.dump(calibrated_tangents,
+#             open('../data/NiTiHf_UNT/temperatures.p', 'wb'))
 
 # Calibrating surfaces
 calibrated_surfaces = {}

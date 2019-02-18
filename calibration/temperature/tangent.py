@@ -16,9 +16,9 @@ class Tangent():
     def __init__(self, transformation, raw_data, stress, standard=True,
                  delta_strain=False):
         if transformation == 'Austenite':
-            self.T_1, self.T_4 = raw_data[0, 0], raw_data[-1, 0]
+            self.T_1, self.T_4 = min(raw_data[:, 0]), max(raw_data[:, 0])
         elif transformation == 'Martensite':
-            self.T_4, self.T_1 = raw_data[0, 0], raw_data[-1, 0]
+            self.T_4, self.T_1 = max(raw_data[:, 0]), min(raw_data[:, 0])
         if delta_strain:
             self.E_1, self.E_4 = max(raw_data[:, 1]), min(raw_data[:, 1])
         self.raw_data = raw_data.copy()
@@ -34,7 +34,7 @@ class Tangent():
 
         self.bounds = [(min(self.raw_data[:, 0]), max(self.raw_data[:, 0])),
                        (0, (max(self.raw_data[:, 0])-min(self.raw_data[:, 0]))/2.)] + \
-            n_strains*[(min(self.raw_data[:, 1]), max(self.raw_data[:, 1])), ]
+            n_strains*[(min(self.raw_data[:, 1])-.0005, max(self.raw_data[:, 1])+.0005), ]
         self.x0 = [(x[0]+x[1])/2. for x in self.bounds]
 
     def _standard_50(self, T):
@@ -60,7 +60,7 @@ class Tangent():
         - T_i: float to calculate estimate value of strain"""
         [T, strain] = self.props.T
         for j in range(3):
-            if T_i - T[j+1] < 1e-5:
+            if T_i - T[j+1] < 1e-4:
                 diff = (strain[j+1] - strain[j])/(T[j+1] - T[j])
                 return diff*(T_i-T[j]) + strain[j]
 
@@ -90,6 +90,9 @@ class Tangent():
             self.start, self.finish = self.props[1, 0], self.props[-2, 0]
         elif self.transformation == 'Martensite':
             self.start, self.finish = self.props[-2, 0], self.props[1, 0]
+
+        if self.finish > self.T_4:
+            self.finish = self.T_4
 
     def error(self, x):
         """Calculate root mean squared"""

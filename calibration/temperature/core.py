@@ -211,27 +211,34 @@ def fitting_transformations(a, m, optimizer='differential_evolution'):
     return(a, m)
 
 
-def processing_raw(filename, driven='temperature', constant_stress=None):
+def processing_raw(filename, driven='temperature', constant_stress=None,
+                   filter_rate=1, hot_to_cold=False):
     """Convert .txt file to a numpy array (temperature, strain, sigma) for
        Austenite and Martensite.
        - filename: string for file to process"""
 
     raw_data = output_reader(filename)
     try:
-        strain = raw_data['Strain']
-        temperature = raw_data['Temperature']
+        strain = raw_data['Strain'][::filter_rate]
+        temperature = raw_data['Temperature'][::filter_rate]
         try:
-            stress = raw_data['Stress']
+            stress = raw_data['Stress'][::filter_rate]
         except KeyError:
             stress = np.ones(len(strain))*constant_stress
     except KeyError:
         raise "Formating error: should have 'Temperature' and 'Strain' columns"
 
     if driven == 'temperature':
-        i = temperature.index(max(temperature))
+        if hot_to_cold:
+            i = temperature.index(min(temperature))
+        else:
+            i = temperature.index(max(temperature))
     else:
         raise NotImplementedError
-
-    austenite = np.vstack([temperature[:i+1], strain[:i+1], stress[:i+1]]).T
-    martensite = np.vstack([temperature[i:], strain[i:], stress[i:]]).T
+    if hot_to_cold:
+        austenite = np.vstack([temperature[i:], strain[i:], stress[i:]]).T
+        martensite = np.vstack([temperature[:i+1], strain[:i+1], stress[:i+1]]).T
+    else:
+        austenite = np.vstack([temperature[:i+1], strain[:i+1], stress[:i+1]]).T
+        martensite = np.vstack([temperature[i:], strain[i:], stress[i:]]).T
     return({'Austenite': austenite, 'Martensite': martensite})
