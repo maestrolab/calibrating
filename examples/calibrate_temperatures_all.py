@@ -16,13 +16,18 @@ from calibration.temperature.tangent import Tangent
 # # Inputs
 optimizer = 'differential_evolution'
 driven = 'temperature'
-# # constant_stresses = [100, 200, 300]
-constant_stresses = [50, 100, 200, 300, 400, 500, 600]
+
+# constant_stresses = [50, 100, 150, 172, 200]
+constant_stresses = [100, 200, 300,400]
+# constant_stresses = [50, 100, 200, 300, 400, 500, 600]
 standard = True
 hot_to_cold = True
 filter_rate = 40
+# location_of_file = "../data/NiTi_flexinol/filtered_data_"
 # location_of_file = "../data/NiTiHf_UNT/filtered_data_"
-location_of_file = "../data/NiTiHf_Karaman/filtered_data_"
+# location_of_file = "../data/NiTiHf_Karaman/filtered_data_"
+# location_of_file = "../data/Alex/MD_NI50_8TI49_2VF0/filtered_data_"
+location_of_file = "../data/Alex/MD_NI50_8TI49_2VF0_V2/filtered_data_"
 
 colors = {'Austenite': ['--r', 'r'], 'Martensite': ['--b', 'b']}
 
